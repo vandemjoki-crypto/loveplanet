@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scripts lokal dengan token/secrets
+*.ps1
+
+# file data lokal (production pakai Supabase)
+data.json
+2.mp4
+/public/uploads/
