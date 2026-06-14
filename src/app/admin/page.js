@@ -117,28 +117,31 @@ export default function AdminPage() {
     fetch(`/api/config?t=${Date.now()}`)
       .then(res => res.json())
       .then(data => {
-        setConfig(data);
-        setTargetName(data.targetName || '');
-        setGreetingMessage(data.greetingMessage || '');
-        setFinaleGreeting(data.finaleGreeting || 'Selamat Ulang Tahun Ke 24');
-        setSelectedGifUrl(data.cakeGifUrl || '');
-        setSelectedMusicUrl(data.musicUrl || '');
-        setSelectedTunnelMusicUrl(data.tunnelMusicUrl || '');
-        setSelectedFinaleMusicUrl(data.finaleMusicUrl || '');
-        setAstronautName(data.astronautName || 'Astronot');
-        if (data.tunnelDialogues) setTunnelDialogues(data.tunnelDialogues);
-        if (data.finaleDialogues) setFinaleDialogues(data.finaleDialogues);
+        if (!data || data.error) return; // Skip jika error dari Supabase
+        // Merge dengan defaults agar photos/musicUrl tidak pernah undefined
+        const safeData = { photos: [], musicUrl: '', tunnelMusicUrl: '', finaleMusicUrl: '', ...data };
+        setConfig(safeData);
+        setTargetName(safeData.targetName || '');
+        setGreetingMessage(safeData.greetingMessage || '');
+        setFinaleGreeting(safeData.finaleGreeting || 'Selamat Ulang Tahun Ke 24');
+        setSelectedGifUrl(safeData.cakeGifUrl || '');
+        setSelectedMusicUrl(safeData.musicUrl || '');
+        setSelectedTunnelMusicUrl(safeData.tunnelMusicUrl || '');
+        setSelectedFinaleMusicUrl(safeData.finaleMusicUrl || '');
+        setAstronautName(safeData.astronautName || 'Astronot');
+        if (safeData.tunnelDialogues) setTunnelDialogues(safeData.tunnelDialogues);
+        if (safeData.finaleDialogues) setFinaleDialogues(safeData.finaleDialogues);
 
-        if (data.planetColors?.length > 0) setPlanetColors(data.planetColors);
-        else if (data.particleColors) setPlanetColors(data.particleColors);
+        if (safeData.planetColors?.length > 0) setPlanetColors(safeData.planetColors);
+        else if (safeData.particleColors) setPlanetColors(safeData.particleColors);
 
-        if (data.ringColors?.length > 0) setRingColors(data.ringColors);
-        else if (data.particleColors) setRingColors(data.particleColors);
+        if (safeData.ringColors?.length > 0) setRingColors(safeData.ringColors);
+        else if (safeData.particleColors) setRingColors(safeData.particleColors);
 
-        if (data.particleRingLayers?.length > 0) setParticleRingLayers(data.particleRingLayers);
+        if (safeData.particleRingLayers?.length > 0) setParticleRingLayers(safeData.particleRingLayers);
 
-        if (data.photoLayers) setPhotoLayers(data.photoLayers);
-        if (data.totalPhotos) setTotalPhotos(data.totalPhotos);
+        if (safeData.photoLayers) setPhotoLayers(safeData.photoLayers);
+        if (safeData.totalPhotos) setTotalPhotos(safeData.totalPhotos);
       })
       .catch(console.error);
   }, []);
