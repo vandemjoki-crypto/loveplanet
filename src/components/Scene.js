@@ -1490,9 +1490,6 @@ function DestinationTutorial({ isFinale, onReachDestination, audioDuration, onSt
 function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, isCinematic }) {
   const vp = useVisualViewport();
 
-  // Hanya tampil saat stage relevan
-  if (stage >= 3) return null;
-
   const audioMinutes = Math.floor((audioDuration || 0) / 60);
 
   // Container mengikuti visual viewport
@@ -1528,10 +1525,19 @@ function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, is
     pointerEvents: 'none',
   };
 
+  // Timer: warna berubah merah & berkedip saat < 30 detik
+  const isWarning = timeLeft > 0 && timeLeft <= 30;
+  const timerColor = isWarning ? '#ff4444' : '#00e5ff';
+
+  // Jangan render apapun jika tidak ada konten yang perlu ditampilkan
+  const showTimer = audioDuration > 0 && timeLeft > 0;
+  const showDialog = stage < 3 && !isCinematic;
+  if (!showTimer && !showDialog) return null;
+
   return (
     <div style={containerStyle}>
-      {/* TIMER */}
-      {audioDuration > 0 && (
+      {/* TIMER — tampil terus sampai habis, termasuk saat cinematic */}
+      {showTimer && (
         <div style={{
           position: 'absolute',
           top: '20px',
@@ -1539,12 +1545,14 @@ function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, is
           background: 'rgba(0,0,0,0.6)',
           padding: '10px 15px',
           borderRadius: '8px',
-          color: '#fff',
+          color: timerColor,
           fontFamily: 'monospace',
           fontSize: '24px',
-          border: '1px solid #00e5ff',
-          boxShadow: '0 0 10px rgba(0,229,255,0.4)',
-          textShadow: '0 0 5px #00e5ff',
+          border: `1px solid ${timerColor}`,
+          boxShadow: `0 0 10px ${timerColor}66`,
+          textShadow: `0 0 5px ${timerColor}`,
+          animation: isWarning ? 'timerPulse 1s ease-in-out infinite' : 'none',
+          transition: 'color 0.5s, border-color 0.5s, box-shadow 0.5s',
         }}>
           {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
         </div>
