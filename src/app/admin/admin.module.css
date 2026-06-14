@@ -1,0 +1,297 @@
+/* ===== GLOBAL LAYOUT ===== */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0a0a1a;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.page {
+  height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #0a0a1a 0%, #12082a 50%, #0a1520 100%);
+  padding: 30px 16px 140px;
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ===== HEADER ===== */
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #b100ff, #00d2ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+/* ===== SECTION CARDS ===== */
+.section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #b100ff, #00d2ff);
+  display: block;
+}
+
+/* ===== FORM ELEMENTS ===== */
+.formGroup {
+  margin-bottom: 18px;
+}
+
+.formGroup:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #bbb;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  font-size: 15px;
+  color: #e0e0e0;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #b100ff;
+  background: rgba(177,0,255,0.08);
+}
+
+.inputSmall {
+  width: 90px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  font-size: 15px;
+  color: #e0e0e0;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.inputSmall:focus {
+  border-color: #00d2ff;
+}
+
+/* ===== NUMBER + COLOR ROW ===== */
+.numberRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.colorRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.colorSwatch {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+  background: none;
+}
+
+.colorSwatch:hover {
+  border-color: #fff;
+  transform: scale(1.1);
+}
+
+/* ===== PHOTO PREVIEW ===== */
+.photoPreview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.thumbnail {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ===== BADGES / HINT ===== */
+.hint {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+}
+
+/* ===== MESSAGE ===== */
+.message {
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: rgba(0, 210, 80, 0.12);
+  border: 1px solid rgba(0, 210, 80, 0.25);
+  color: #4dffa0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.errorMessage {
+  background: rgba(255, 50, 50, 0.12);
+  border: 1px solid rgba(255, 50, 50, 0.25);
+  color: #ff8080;
+}
+
+/* ===== BUTTONS ===== */
+.button {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #b100ff, #5500cc);
+  color: white;
+  transition: opacity 0.2s, transform 0.1s;
+  letter-spacing: 0.3px;
+}
+
+.button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  background: rgba(255,255,255,0.08);
+  color: #555;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnDanger {
+  background: rgba(220, 50, 50, 0.15);
+  border: 1px solid rgba(220, 50, 50, 0.3);
+  color: #ff7070;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btnDanger:hover {
+  background: rgba(220, 50, 50, 0.3);
+}
+
+/* ===== STICKY SAVE BUTTON ===== */
+.saveBar {
+  background: rgba(10, 10, 26, 0.9);
+  backdrop-filter: blur(12px);
+  padding: 16px 0 0;
+  margin-top: 32px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ===== SCROLL BUTTONS ===== */
+.scrollFab {
+  position: fixed;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.scrollFabBottom {
+  bottom: 24px;
+}
+
+.scrollFabTop {
+  bottom: 84px;
+}
+
+.fabBtn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(177, 0, 255, 0.4);
+  background: rgba(177, 0, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 4px 20px rgba(177, 0, 255, 0.25);
+}
+
+.fabBtn:hover {
+  background: rgba(177, 0, 255, 0.45);
+  transform: scale(1.1);
+}

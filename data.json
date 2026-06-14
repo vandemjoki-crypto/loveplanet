@@ -1,0 +1,51 @@
+{
+  "targetName": "Fian",
+  "greetingMessage": "Only For You",
+  "finaleGreeting": "Selamat Ulang Tahun Ke 24 Sayangku",
+  "astronautName": "ALFIAN",
+  "tunnelDialogues": [
+    "Apakah kamu melihatnya, perempuan yang sangat cantik itu....",
+    "Dia adalah alasan mengapa alam semesta ini tercipta.",
+    "Senyumannya bersinar jauh lebih terang dari bintang-bintang ini.",
+    "Setiap detik perjalanan ini hanya berisi kenangan tentangnya...",
+    "Pegang erat kemudi! Kita sudah hampir sampai di planet miliknya!"
+  ],
+  "finaleDialogues": [
+    "Apakah Kamu Menyukai kejutan ini?",
+    "Semoga Kamu Panjang Umur",
+    "Sehat Selalu",
+    "Diperlancar Kegiatannya",
+    "Amin"
+  ],
+  "planetColors": [
+    "#b100ff"
+  ],
+  "ringColors": [
+    "#2321c0",
+    "#d84f4f",
+    "#dddeee"
+  ],
+  "particleRingLayers": [
+    {
+      "color": "#9bcaed",
+      "subLayers": 5
+    },
+    {
+      "color": "#00ccf5",
+      "subLayers": 30
+    }
+  ],
+  "photoLayers": 3,
+  "totalPhotos": 26,
+  "photos": [
+    "/uploads/1780869075570-967817186-01d70e49a4b943e3af757461f1d15f36.mp4",
+    "/uploads/1780869075618-860924691-06d3ba3b2a3db2b07ad33b7cd43bf68a.jpg",
+    "/uploads/1780869075638-968771795-7706e98b75a8b8a096cd913f4051a9ef.jpg",
+    "/uploads/1780869075642-782484403-20240928181412.jpg",
+    "/uploads/1780869075645-23424770-IMG20240627183605388.jpg"
+  ],
+  "musicUrl": "/uploads/1781345180828-540210787-ElevenLabs2025-08-14T080551Mahaputrapvcsp100s72sb81se46bm21.mp3",
+  "tunnelMusicUrl": "/uploads/1781345180876-330172253-ElevenLabs2025-08-14T071413Mahaputrapvcsp100s72sb81se46bm2.mp3",
+  "finaleMusicUrl": "/uploads/1781345180957-231648314-ElevenLabs2025-08-13T134940Andipvcsp100s50sb75se0bm2.mp3",
+  "cakeGifUrl": "/uploads/1781238982944-559432961-SWEETBROWNYCONYGIFCUTESTICKERlivtorresec.gif"
+}
