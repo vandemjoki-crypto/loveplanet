@@ -92,9 +92,26 @@ export default function Home() {
     }
   };
 
+  // Fade-out musik lorong saat hitung mundur 3-2-1 dimulai
+  const handleCountdownStart = useCallback(() => {
+    if (!tunnelAudio) return;
+    const fadeStep = 0.05;
+    const interval = setInterval(() => {
+      if (tunnelAudio.volume > fadeStep) {
+        tunnelAudio.volume = Math.max(0, tunnelAudio.volume - fadeStep);
+      } else {
+        tunnelAudio.volume = 0;
+        tunnelAudio.pause();
+        clearInterval(interval);
+      }
+    }, 75); // setiap 75ms → fade selesai dalam ~1.5 detik
+  }, [tunnelAudio]);
+
   const handleReachDestination = useCallback(() => {
+    // Pastikan tunnelAudio benar-benar berhenti (sudah di-fade oleh handleCountdownStart)
     if (tunnelAudio) {
       tunnelAudio.pause();
+      tunnelAudio.volume = 1; // reset volume untuk pakai ulang
     }
     if (audio) {
       audio.loop = false;
@@ -114,6 +131,7 @@ export default function Home() {
       }
     }
   }, [audio, tunnelAudio, finaleAudio]);
+
 
   const handleYes = () => {
     setDialogueStep(2); // Menampilkan pesan ajakan naik roket (opsional, akan terlihat sekilas)
@@ -179,7 +197,7 @@ export default function Home() {
         </>
       ) : (
         <div className={styles.sceneContainer}>
-           <Scene config={config} isFinale={isFinale} onReachDestination={handleReachDestination} audioDuration={audioDuration} />
+           <Scene config={config} isFinale={isFinale} onReachDestination={handleReachDestination} onCountdownStart={handleCountdownStart} audioDuration={audioDuration} />
            
            {/* Flash Silau Putih Instan (Diletakkan di HTML murni agar tidak menunggu 3D Canvas selesai dimuat) */}
            <div style={{

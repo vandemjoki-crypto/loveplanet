@@ -1736,7 +1736,7 @@ function FinaleDialogue({ dialogues, astronautName }) {
 }
 
 
-export default function Scene({ config, isFinale, onReachDestination, audioDuration }) {
+export default function Scene({ config, isFinale, onReachDestination, onCountdownStart, audioDuration }) {
   const [isCinematic, setIsCinematic] = useState(false);
   const [isInitialFlyIn, setIsInitialFlyIn] = useState(true);
   const [isWaiting, setIsWaiting] = useState(true);
@@ -1775,6 +1775,13 @@ export default function Scene({ config, isFinale, onReachDestination, audioDurat
   useEffect(() => {
     if (isFinale) setIsCinematic(false);
   }, [isFinale]);
+
+  // Panggil onCountdownStart saat isExiting berubah jadi true (hitung mundur 3-2-1 mulai)
+  useEffect(() => {
+    if (isExiting && onCountdownStart) {
+      onCountdownStart();
+    }
+  }, [isExiting, onCountdownStart]);
 
   // ============================================================
   // BLOKIR SENTUHAN saat animasi berlangsung:
