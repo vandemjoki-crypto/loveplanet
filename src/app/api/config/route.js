@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const CONFIG_ID = 1; // Satu baris config saja
 
 export async function GET() {
+  if (!supabaseAdmin) return NextResponse.json({ error: 'Supabase tidak dikonfigurasi' }, { status: 500 });
   try {
     const { data, error } = await supabaseAdmin
       .from('config')
@@ -40,6 +41,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  if (!supabaseAdmin) return NextResponse.json({ error: 'Supabase tidak dikonfigurasi' }, { status: 500 });
   try {
     const body = await request.json();
 
