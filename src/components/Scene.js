@@ -1,8 +1,9 @@
 import { useRef, useMemo, useState, useEffect, Suspense, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Stars, useVideoTexture, Billboard, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { playExplosionSound, playTextExplosionSound } from '../utils/audioHelpers';
 
 // Buat tekstur lingkaran sempurna untuk partikel bulat
 function makeCircleTexture() {
@@ -723,12 +724,13 @@ const PARTICLE_COUNT = 100;
 const BURST_DURATION = 5.0;   // Durasi 1 ledakan: 5 detik
 const BURST_PERIOD   = 6.5;   // Jeda antar ledakan berulang: 6.5 detik
 
-function FireworkBurst({ position, delay, color }) {
+function FireworkBurst({ position, delay, color, config }) {
   const pointsRef = useRef();
   const matRef    = useRef();
   const circleTex = useMemo(() => makeCircleTexture(), []);
   const threeColor = useMemo(() => new THREE.Color(color), [color]);
   const startTime = useRef(null);
+  const lastCycle = useRef(-1);
 
   // Pre-hitung arah ledakan semua partikel
   const directions = useMemo(() => {
@@ -758,6 +760,12 @@ function FireworkBurst({ position, delay, color }) {
     }
 
     // t bersiklus dari 0 → BURST_PERIOD, lalu reset → ledakan berulang terus
+    const cycle = Math.floor(elapsed / BURST_PERIOD);
+    if (cycle > lastCycle.current) {
+      lastCycle.current = cycle;
+      playExplosionSound(config?.sfxVolume !== undefined ? config.sfxVolume : 1.0);
+    }
+    
     const t        = elapsed % BURST_PERIOD;
     const progress = Math.min(t / BURST_DURATION, 1);
     const ease     = 1 - Math.pow(1 - progress, 3); // ease-out cubic
@@ -808,7 +816,7 @@ function FireworkBurst({ position, delay, color }) {
   );
 }
 
-function Fireworks() {
+function Fireworks({ config }) {
   const palette = ['#ff3366','#ffcc00','#00e5ff','#ff6600','#aa00ff','#00ff88','#ffffff','#ff69b4','#ff4500','#7fff00'];
 
   // 30 titik ledakan tersebar luas memenuhi seluruh area layar
@@ -829,7 +837,7 @@ function Fireworks() {
   return (
     <group>
       {bursts.map((b) => (
-        <FireworkBurst key={b.id} position={b.position} delay={b.delay} color={b.color} />
+        <FireworkBurst key={b.id} position={b.position} delay={b.delay} color={b.color} config={config} />
       ))}
     </group>
   );
@@ -1047,7 +1055,7 @@ function BirthdayCake({ config }) {
 // Jalur koordinat (Normalized X: 0 to 1, Y: 0 to 2) untuk melukis angka 0-9
 // (digitPaths telah dihapus karena sekarang kita menggunakan teks Canvas estetik)
 
-function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24" }) {
+function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24", config }) {
   const pointsRef = useRef();
   const [screenType, setScreenType] = useState('desktop');
 
@@ -1206,6 +1214,7 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24" }) {
   const currentPositions = useMemo(() => new Float32Array(PARTICLE_COUNT * 3), []);
   const circleTex = useMemo(() => makeCircleTexture(), []);
   const startTime = useRef(null);
+  const hasExploded = useRef(false);
 
   useFrame((state) => {
     if (!startTime.current) startTime.current = state.clock.elapsedTime;
@@ -1214,6 +1223,11 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24" }) {
     if (t < startDelay || targetPositions.length === 0) {
       if (pointsRef.current) pointsRef.current.visible = false;
       return;
+    }
+    
+    if (!hasExploded.current) {
+      hasExploded.current = true;
+      playTextExplosionSound(config?.sfxVolume !== undefined ? config.sfxVolume : 1.0);
     }
     
     if (pointsRef.current) pointsRef.current.visible = true;
@@ -1919,9 +1933,9 @@ export default function Scene({ config, isFinale, onReachDestination, onCountdow
         
         {isFinale && (
           <group position={[0, 3, 0]}>
-            <Fireworks />
+            <Fireworks config={config} />
             <BirthdayCake config={config} />
-            <NumberFirework greetingStr={config.finaleGreeting || 'Selamat Ulang Tahun Ke 24'} />
+            <NumberFirework config={config} greetingStr={config.finaleGreeting || 'Selamat Ulang Tahun Ke 24'} />
           </group>
         )}
 
