@@ -162,6 +162,83 @@ export default function Home() {
     }
   }, [audio, tunnelAudio, finaleAudio]);
 
+  // Putar efek kembang api saat isFinale aktif
+  useEffect(() => {
+    if (!isFinale) return;
+    
+    let isActive = true;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      
+      const playFirework = () => {
+        if (!isActive) return;
+        
+        // --- 1. Suara luncuran (whistle up) ---
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        osc.type = 'sine';
+        // Pitch naik perlahan
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.8);
+        
+        // Volume luncuran kecil
+        oscGain.gain.setValueAtTime(0, ctx.currentTime);
+        oscGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.2);
+        oscGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+        
+        osc.connect(oscGain);
+        oscGain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.8);
+        
+        // --- 2. Suara ledakan (noise) ---
+        setTimeout(() => {
+          if (!isActive) return;
+          const bufferSize = ctx.sampleRate * 1.5; // 1.5 detik ledakan
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1; // white noise
+          }
+          
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+          
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(1000, ctx.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 1.5);
+          
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05); // attack cepat
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5); // decay perlahan
+          
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+          
+          noise.start(ctx.currentTime);
+          noise.stop(ctx.currentTime + 1.5);
+        }, 800); // Ledakan terjadi 0.8 detik setelah luncuran
+        
+        // Jadwalkan kembang api berikutnya secara acak (1.5 - 3.5 detik)
+        if (isActive) {
+          setTimeout(playFirework, 1500 + Math.random() * 2000);
+        }
+      };
+      
+      // Mulai kembang api berantai setelah jeda 1 detik masuk finale
+      setTimeout(playFirework, 1000);
+      
+    } catch(e) {
+      console.error("Gagal memutar suara kembang api", e);
+    }
+    
+    return () => { isActive = false; };
+  }, [isFinale]);
 
   const handleYes = () => {
     setDialogueStep(2); // Menampilkan pesan ajakan naik roket (opsional, akan terlihat sekilas)
