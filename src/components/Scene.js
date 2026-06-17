@@ -566,9 +566,9 @@ function GalaxyTimeTunnelOverlay({ active, isExiting, tunnelClickCount, config, 
           boxShadow: tunnelClickCount >= 6 ? '0 0 15px rgba(255, 51, 102, 0.5)' : 'none',
           textShadow: '0 0 5px #000',
           transition: 'all 0.5s ease',
-          width: 'max-content',
-          maxWidth: '85%',
-          lineHeight: '1.4'
+          maxWidth: '90%',
+          lineHeight: '1.5',
+          wordWrap: 'break-word'
         }}>
           {tunnelClickCount < 6 
             ? "Tekan layar 1x untuk memperlambat roket, dan tekan 1x lagi untuk melaju."
@@ -1616,9 +1616,9 @@ function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, is
           boxShadow: '0 0 15px rgba(255, 51, 102, 0.5)',
           textShadow: '0 0 5px #000',
           animation: 'fadeInDialog 1s ease-out',
-          width: 'max-content',
-          maxWidth: '85%',
-          lineHeight: '1.4'
+          maxWidth: '90%',
+          lineHeight: '1.5',
+          wordWrap: 'break-word'
         }}>
           ✨ Tekan layar 2x di mana saja untuk mengaktifkan mode sinematik ✨
         </div>
