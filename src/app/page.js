@@ -92,8 +92,38 @@ export default function Home() {
     }
   };
 
-  // Fade-out musik lorong saat hitung mundur 3-2-1 dimulai
+  // Fade-out musik lorong saat hitung mundur 3-2-1 dimulai dan bunyikan efek suara
   const handleCountdownStart = useCallback(() => {
+    // Generate sound efek hitung mundur (3, 2, 1, GO)
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const playBeep = (freq, time, duration, vol = 0.1) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+          gain.gain.setValueAtTime(0, ctx.currentTime + time);
+          gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + time + 0.05);
+          gain.gain.setValueAtTime(vol, ctx.currentTime + time + duration - 0.05);
+          gain.gain.linearRampToValueAtTime(0, ctx.currentTime + time + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + time);
+          osc.stop(ctx.currentTime + time + duration);
+        };
+
+        // Sinkronisasi dengan TunnelExitSequence di Scene.js (2.5s, 3.5s, 4.5s, 5.5s)
+        playBeep(440, 2.5, 0.2); // 3
+        playBeep(440, 3.5, 0.2); // 2
+        playBeep(440, 4.5, 0.2); // 1
+        playBeep(880, 5.5, 0.6, 0.15); // GO
+      }
+    } catch(e) {
+      console.error("Gagal memutar suara hitung mundur", e);
+    }
+
     if (!tunnelAudio) return;
     const fadeStep = 0.05;
     const interval = setInterval(() => {
