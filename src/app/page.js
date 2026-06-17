@@ -13,6 +13,7 @@ export default function Home() {
   const [showScroll, setShowScroll] = useState(false);
   const [isFinale, setIsFinale] = useState(false);
   const [dialogueStep, setDialogueStep] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const overlayRef = useRef(null);
 
   useEffect(() => {
@@ -258,6 +259,21 @@ export default function Home() {
     setDialogueStep(1); // Menampilkan pesan lucunya
   };
 
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
   const handleScrollDown = () => {
     const el = overlayRef.current;
     if (el) el.scrollBy({ top: el.clientHeight * 0.7, behavior: 'smooth' });
@@ -365,6 +381,56 @@ export default function Home() {
                🎂 Finale
              </button>
            )}
+
+            {/* Tombol Fullscreen — pojok kiri bawah */}
+            <button
+              onClick={toggleFullscreen}
+              aria-label={isFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
+              style={{
+                position: 'fixed',
+                bottom: '16px',
+                left: '16px',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.18)',
+                color: 'rgba(255,255,255,0.6)',
+                borderRadius: '10px',
+                padding: '8px',
+                width: '38px',
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 100,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(0,229,255,0.2)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.95)';
+                e.currentTarget.style.borderColor = 'rgba(0,229,255,0.5)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {isFullscreen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
+                  <line x1="14" y1="10" x2="21" y2="3" /><line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
+                  <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              )}
+            </button>
         </div>
       )}
     </main>
