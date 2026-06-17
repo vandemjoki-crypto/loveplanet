@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useState, useEffect, Suspense, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Text, Stars, useVideoTexture, Billboard, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { playExplosionSound, playTextExplosionSound } from '../utils/audioHelpers';
