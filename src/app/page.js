@@ -22,16 +22,21 @@ export default function Home() {
         setConfig(data);
         if (data.musicUrl) {
           const newAudio = new Audio(data.musicUrl);
+          newAudio.volume = data.musicVolume !== undefined ? data.musicVolume : 1.0;
           newAudio.addEventListener('loadedmetadata', () => {
             setAudioDuration(newAudio.duration);
           });
           setAudio(newAudio);
         }
         if (data.tunnelMusicUrl) {
-          setTunnelAudio(new Audio(data.tunnelMusicUrl));
+          const newTunnel = new Audio(data.tunnelMusicUrl);
+          newTunnel.volume = data.musicVolume !== undefined ? data.musicVolume : 1.0;
+          setTunnelAudio(newTunnel);
         }
         if (data.finaleMusicUrl) {
-          setFinaleAudio(new Audio(data.finaleMusicUrl));
+          const newFinale = new Audio(data.finaleMusicUrl);
+          newFinale.volume = data.musicVolume !== undefined ? data.musicVolume : 1.0;
+          setFinaleAudio(newFinale);
         }
       });
   }, []);
@@ -99,14 +104,16 @@ export default function Home() {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
         const ctx = new AudioContext();
+        const sfxVol = config?.sfxVolume !== undefined ? config.sfxVolume : 1.0;
         const playBeep = (freq, time, duration, vol = 0.1) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
+          const finalVol = vol * sfxVol;
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
           gain.gain.setValueAtTime(0, ctx.currentTime + time);
-          gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + time + 0.05);
-          gain.gain.setValueAtTime(vol, ctx.currentTime + time + duration - 0.05);
+          gain.gain.linearRampToValueAtTime(finalVol, ctx.currentTime + time + 0.05);
+          gain.gain.setValueAtTime(finalVol, ctx.currentTime + time + duration - 0.05);
           gain.gain.linearRampToValueAtTime(0, ctx.currentTime + time + duration);
           osc.connect(gain);
           gain.connect(ctx.destination);
@@ -125,7 +132,8 @@ export default function Home() {
     }
 
     if (!tunnelAudio) return;
-    const fadeStep = 0.05;
+    const baseVol = config?.musicVolume !== undefined ? config.musicVolume : 1.0;
+    const fadeStep = baseVol * 0.05;
     const interval = setInterval(() => {
       if (tunnelAudio.volume > fadeStep) {
         tunnelAudio.volume = Math.max(0, tunnelAudio.volume - fadeStep);
@@ -141,7 +149,7 @@ export default function Home() {
     // Pastikan tunnelAudio benar-benar berhenti (sudah di-fade oleh handleCountdownStart)
     if (tunnelAudio) {
       tunnelAudio.pause();
-      tunnelAudio.volume = 1; // reset volume untuk pakai ulang
+      tunnelAudio.volume = config?.musicVolume !== undefined ? config.musicVolume : 1.0; // reset volume untuk pakai ulang
     }
     if (audio) {
       audio.loop = false;
@@ -171,6 +179,7 @@ export default function Home() {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
+      const sfxVol = config?.sfxVolume !== undefined ? config.sfxVolume : 1.0;
       
       const playFirework = () => {
         if (!isActive) return;
@@ -185,7 +194,7 @@ export default function Home() {
         
         // Volume luncuran kecil
         oscGain.gain.setValueAtTime(0, ctx.currentTime);
-        oscGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.2);
+        oscGain.gain.linearRampToValueAtTime(0.05 * sfxVol, ctx.currentTime + 0.2);
         oscGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
         
         osc.connect(oscGain);
@@ -213,8 +222,8 @@ export default function Home() {
           
           const gain = ctx.createGain();
           gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05); // attack cepat
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5); // decay perlahan
+          gain.gain.linearRampToValueAtTime(0.3 * sfxVol, ctx.currentTime + 0.05); // attack cepat
+          gain.gain.exponentialRampToValueAtTime(0.01 * sfxVol, ctx.currentTime + 1.5); // decay perlahan
           
           noise.connect(filter);
           filter.connect(gain);

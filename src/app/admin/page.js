@@ -88,6 +88,10 @@ export default function AdminPage() {
     { color: '#ff00b1', subLayers: 10 },
   ]);
 
+  // Pengaturan Volume
+  const [musicVolume, setMusicVolume] = useState(1.0);
+  const [sfxVolume, setSfxVolume] = useState(1.0);
+
   // Pengaturan foto cincin
   const [photoLayers, setPhotoLayers] = useState(4);
   const [totalPhotos, setTotalPhotos] = useState(120);
@@ -139,6 +143,9 @@ export default function AdminPage() {
         else if (safeData.particleColors) setRingColors(safeData.particleColors);
 
         if (safeData.particleRingLayers?.length > 0) setParticleRingLayers(safeData.particleRingLayers);
+
+        if (safeData.musicVolume !== undefined) setMusicVolume(safeData.musicVolume);
+        if (safeData.sfxVolume !== undefined) setSfxVolume(safeData.sfxVolume);
 
         if (safeData.photoLayers) setPhotoLayers(safeData.photoLayers);
         if (safeData.totalPhotos) setTotalPhotos(safeData.totalPhotos);
@@ -235,6 +242,8 @@ export default function AdminPage() {
         particleRingLayers,
         photoLayers: parseInt(photoLayers) || 4,
         totalPhotos: parseInt(totalPhotos) || 120,
+        musicVolume: parseFloat(musicVolume),
+        sfxVolume: parseFloat(sfxVolume),
         photos: updatedPhotos,
         musicUrl: updatedMusic,
         tunnelMusicUrl: updatedTunnelMusic,
@@ -543,9 +552,36 @@ export default function AdminPage() {
           {/* — SECTION: Musik — */}
           {activeTab === 'profil' && (
           <div className={styles.section}>
-            <p className={styles.sectionTitle}>Musik Latar</p>
+            <p className={styles.sectionTitle}>Pengaturan Suara & Musik</p>
+            
+            <div className={styles.formGroup} style={{ background: 'rgba(0, 229, 255, 0.05)', padding: '15px', borderRadius: '8px', border: '1px solid #00e5ff33', marginBottom: '20px' }}>
+              <label className={styles.label}>Volume Musik (Planet, Lorong, Kue)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.05" 
+                  value={musicVolume} 
+                  onChange={(e) => setMusicVolume(e.target.value)}
+                  style={{ flex: 1, accentColor: '#00e5ff' }}
+                />
+                <span style={{ minWidth: '45px', color: '#00e5ff', fontWeight: 'bold' }}>{Math.round(musicVolume * 100)}%</span>
+              </div>
+              
+              <label className={styles.label} style={{ marginTop: '15px' }}>Volume Efek Suara (Hitung Mundur, Kembang Api)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.05" 
+                  value={sfxVolume} 
+                  onChange={(e) => setSfxVolume(e.target.value)}
+                  style={{ flex: 1, accentColor: '#00e5ff' }}
+                />
+                <span style={{ minWidth: '45px', color: '#00e5ff', fontWeight: 'bold' }}>{Math.round(sfxVolume * 100)}%</span>
+              </div>
+            </div>
+
             <div className={styles.formGroup}>
-              <label className={styles.label}>Musik Latar (Galeri & Upload)</label>
+              <label className={styles.label}>Musik Latar Planet (Galeri & Upload)</label>
 
               {availableMusic.length > 0 && (
                 <div style={{ marginBottom: '15px' }}>
