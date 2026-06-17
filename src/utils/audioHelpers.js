@@ -1,5 +1,7 @@
 // Helper untuk menghasilkan efek suara Web Audio API
 let audioCtx = null;
+let explosionBuffer = null;
+let textExplosionBuffer = null;
 
 function getContext() {
   if (!audioCtx) {
@@ -13,25 +15,42 @@ function getContext() {
     }
   }
   if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    audioCtx.resume().catch(() => {}); // Catch safely
   }
   return audioCtx;
 }
 
+function getExplosionBuffer(ctx) {
+  if (!explosionBuffer) {
+    const bufferSize = Math.floor(ctx.sampleRate * 1.5);
+    explosionBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = explosionBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+  }
+  return explosionBuffer;
+}
+
+function getTextExplosionBuffer(ctx) {
+  if (!textExplosionBuffer) {
+    const bufferSize = Math.floor(ctx.sampleRate * 3.0);
+    textExplosionBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = textExplosionBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+  }
+  return textExplosionBuffer;
+}
+
 export function playExplosionSound(sfxVol = 1.0) {
   const ctx = getContext();
-  if (!ctx) return;
+  if (!ctx || sfxVol <= 0.01) return;
 
   try {
-    const bufferSize = ctx.sampleRate * 1.5; // 1.5 detik ledakan
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1; // white noise
-    }
-    
     const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = getExplosionBuffer(ctx);
     
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -40,8 +59,8 @@ export function playExplosionSound(sfxVol = 1.0) {
     
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime((0.2 + Math.random() * 0.1) * sfxVol, ctx.currentTime + 0.02); // attack instan
-    gain.gain.exponentialRampToValueAtTime(0.01 * sfxVol, ctx.currentTime + 1.5); // decay perlahan
+    gain.gain.linearRampToValueAtTime((0.2 + Math.random() * 0.1) * sfxVol, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01 * sfxVol, ctx.currentTime + 1.5);
     
     noise.connect(filter);
     filter.connect(gain);
@@ -56,18 +75,12 @@ export function playExplosionSound(sfxVol = 1.0) {
 
 export function playTextExplosionSound(sfxVol = 1.0) {
   const ctx = getContext();
-  if (!ctx) return;
+  if (!ctx || sfxVol <= 0.01) return;
 
   try {
     // 1. Ledakan super besar (Noise besar)
-    const bufferSize = ctx.sampleRate * 3.0;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
     const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
+    noise.buffer = getTextExplosionBuffer(ctx);
     
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
@@ -105,17 +118,19 @@ export function playTextExplosionSound(sfxVol = 1.0) {
     // 3. Suara gemerlap (Sparkles)
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
-        const sparkOsc = ctx.createOscillator();
-        sparkOsc.type = 'sine';
-        sparkOsc.frequency.setValueAtTime(1500 + Math.random() * 1000, ctx.currentTime);
-        const sparkGain = ctx.createGain();
-        sparkGain.gain.setValueAtTime(0, ctx.currentTime);
-        sparkGain.gain.linearRampToValueAtTime(0.1 * sfxVol, ctx.currentTime + 0.01);
-        sparkGain.gain.exponentialRampToValueAtTime(0.01 * sfxVol, ctx.currentTime + 0.5);
-        sparkOsc.connect(sparkGain);
-        sparkGain.connect(ctx.destination);
-        sparkOsc.start(ctx.currentTime);
-        sparkOsc.stop(ctx.currentTime + 0.5);
+        try {
+          const sparkOsc = ctx.createOscillator();
+          sparkOsc.type = 'sine';
+          sparkOsc.frequency.setValueAtTime(1500 + Math.random() * 1000, ctx.currentTime);
+          const sparkGain = ctx.createGain();
+          sparkGain.gain.setValueAtTime(0, ctx.currentTime);
+          sparkGain.gain.linearRampToValueAtTime(0.1 * sfxVol, ctx.currentTime + 0.01);
+          sparkGain.gain.exponentialRampToValueAtTime(0.01 * sfxVol, ctx.currentTime + 0.5);
+          sparkOsc.connect(sparkGain);
+          sparkGain.connect(ctx.destination);
+          sparkOsc.start(ctx.currentTime);
+          sparkOsc.stop(ctx.currentTime + 0.5);
+        } catch(e) {}
       }, i * 200 + Math.random() * 100);
     }
 
