@@ -732,33 +732,38 @@ function RotatingRingsSystem({ config }) {
   useFrame((state) => {
     if (groupRef.current) {
       // Menggunakan state.clock.elapsedTime agar rotasi mulus dan konsisten
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.1;
+      groupRef.current.rotation.z = state.clock.elapsedTime * 0.1;
     }
   });
 
+  // Diputar 90 derajat pada sumbu X agar cincin berdiri tegak menghadap kamera
+  // Partikel cincin berada di bidang XZ secara default (berbaring datar)
+  // Rotasi -Math.PI/2 membuatnya berdiri di bidang XY (sejajar dengan layar)
   return (
-    <group ref={groupRef}>
-      <MultiParticleRings 
-        layers={config.particleRingLayers} 
-        numLayers={config.photoLayers || 4} 
-        baseRadius={4.4} 
-        layerSpacing={0.8} 
-      />
-      <Suspense fallback={null}>
-        {config.photos && config.photos.length > 0 && (
-          <>
-            <CenterSlideshow photos={config.photos} />
-            <PhotoRing
-              photos={config.photos}
-              config={config} // Pass config untuk baca ketebalan dinamis
-              baseRadius={4.4}
-              layerSpacing={0.8}
-              numLayers={config.photoLayers || 4}
-              totalCount={config.totalPhotos || 120}
-            />
-          </>
-        )}
-      </Suspense>
+    <group rotation={[-Math.PI / 2, 0, 0]}>
+      <group ref={groupRef}>
+        <MultiParticleRings 
+          layers={config.particleRingLayers} 
+          numLayers={config.photoLayers || 4} 
+          baseRadius={4.4} 
+          layerSpacing={0.8} 
+        />
+        <Suspense fallback={null}>
+          {config.photos && config.photos.length > 0 && (
+            <>
+              <CenterSlideshow photos={config.photos} />
+              <PhotoRing
+                photos={config.photos}
+                config={config}
+                baseRadius={4.4}
+                layerSpacing={0.8}
+                numLayers={config.photoLayers || 4}
+                totalCount={config.totalPhotos || 120}
+              />
+            </>
+          )}
+        </Suspense>
+      </group>
     </group>
   );
 }
