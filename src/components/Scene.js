@@ -1874,6 +1874,7 @@ function FinaleDialogue({ dialogues, astronautName, astronautPhotoUrl, onFinish 
 // ===== ANIMATED PLANET & TEXT =====
 function AnimatedPlanetGroup({ isFinale, config }) {
   const planetRef = useRef();
+  const ringRef = useRef();
   const textRef = useRef();
 
   useFrame((state, delta) => {
@@ -1881,6 +1882,11 @@ function AnimatedPlanetGroup({ isFinale, config }) {
       // User meminta agar lingkaran planet lurus (tidak miring)
       const targetTilt = 0.0;
       planetRef.current.rotation.x = THREE.MathUtils.lerp(planetRef.current.rotation.x, targetTilt, delta * 2);
+    }
+    if (ringRef.current) {
+      // Pindahkan ring ke atas agar sejajar dengan kue (Y=8) saat finale
+      const targetRingY = isFinale ? 8.0 : 0.0;
+      ringRef.current.position.y = THREE.MathUtils.lerp(ringRef.current.position.y, targetRingY, delta * 2);
     }
     if (textRef.current) {
       // Teks naik ke atas kue saat finale
@@ -1891,9 +1897,13 @@ function AnimatedPlanetGroup({ isFinale, config }) {
 
   return (
     <group position={[0, 3, 0]}>
-      {/* Planet & Ring yang akan miring */}
+      {/* Planet */}
       <group ref={planetRef} rotation={[0, 0, 0]}>
         <ParticlePlanet colors={config.planetColors} />
+      </group>
+
+      {/* Ring (Lingkaran) yang akan naik sejajar dengan kue */}
+      <group ref={ringRef} position={[0, 0, 0]}>
         <RotatingRingsSystem config={config} />
       </group>
 
