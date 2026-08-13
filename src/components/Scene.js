@@ -6,6 +6,7 @@ import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Text, Stars, useVideoTexture, Billboard, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { playExplosionSound, playTextExplosionSound } from '../utils/audioHelpers';
+import StoryShareModal from './StoryShareModal';
 
 // Buat tekstur lingkaran sempurna untuk partikel bulat
 function makeCircleTexture() {
@@ -50,6 +51,27 @@ function MediaItem({ url, ...props }) {
     return <VideoPhoto url={url} {...props} />;
   }
   return <ImagePhoto url={url} {...props} />;
+}
+
+function CakeOrnament({ url, size = 3.5 }) {
+  const isVideo = url.match(/\.(mp4|webm|ogg|mov)$/i);
+  // Using useVideoTexture for videos, standard TextureLoader for images
+  // We use try/catch or just let suspense handle it
+  const texture = isVideo 
+    ? useVideoTexture(url, { muted: true, loop: true, start: true, crossOrigin: 'Anonymous' })
+    : useLoader(THREE.TextureLoader, url);
+
+  // Position Y is dynamically adjusted based on size so the bottom always rests at Y=2.25
+  const posY = 2.25 + (size / 2);
+
+  return (
+    <Billboard position={[0, posY, 0]} follow={true} lockX={false} lockY={false} lockZ={false}>
+      <mesh>
+        <planeGeometry args={[size, size]} />
+        <meshBasicMaterial map={texture} side={THREE.DoubleSide} transparent={true} />
+      </mesh>
+    </Billboard>
+  );
 }
 
 function PhotoRing({ photos, config, baseRadius = 5.5, layerSpacing = 1.0, numLayers = 4, totalCount = 120 }) {
@@ -519,12 +541,14 @@ function GalaxyTimeTunnel({ active, photos, dialogues = [], isExiting, tunnelCli
       <StylizedRocket isSlowMode={tunnelIsSlowMode} />
 
       {/* Terbang Bersama Foto */}
-      <group ref={photosGroupRef}>
-        {tunnelPhotos.map((item, i) => (
-          // Skala foto dibuat lebih kecil sedikit di lorong agar tidak menutupi bintang
-          <MediaItem key={i} url={item.url} position={[item.x, item.y, item.z]} scale={[2.5, 2.5, 2.5]} />
-        ))}
-      </group>
+      <Suspense fallback={null}>
+        <group ref={photosGroupRef}>
+          {tunnelPhotos.map((item, i) => (
+            // Skala foto dibuat lebih kecil sedikit di lorong agar tidak menutupi bintang
+            <MediaItem key={i} url={item.url} position={[item.x, item.y, item.z]} scale={[2.5, 2.5, 2.5]} />
+          ))}
+        </group>
+      </Suspense>
     </group>
   );
 }
@@ -583,34 +607,50 @@ function GalaxyTimeTunnelOverlay({ active, isExiting, tunnelClickCount, config, 
           bottom: '40px',
           left: '50%',
           transform: 'translateX(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          background: 'rgba(10, 15, 30, 0.85)',
+          background: 'rgba(10, 15, 30, 0.9)',
           border: '2px solid #00e5ff',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.2)',
+          borderRadius: '16px',
+          padding: '50px 24px 24px 24px',
+          boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.25)',
           backdropFilter: 'blur(8px)',
           maxWidth: '600px',
           width: '90%',
           color: 'white',
           fontFamily: "'Courier New', Courier, monospace",
-          gap: '20px',
           animation: 'fadeInDialog 0.5s ease-out',
           pointerEvents: 'auto'
         }}>
-          <img src="/astronaut_avatar.png" alt="Astronaut" style={{
-            width: '80px', height: '80px', borderRadius: '50%',
-            border: '3px solid #00e5ff', flexShrink: 0
-          }} />
-          <div style={{ textAlign: 'left' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#00e5ff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
-              {config.astronautName || 'Astronot'}
-            </h4>
-            <p style={{ margin: 0, fontSize: '16px', lineHeight: '1.5' }}>
-              {safeDialogues[tunnelDialogueIndex >= 0 ? tunnelDialogueIndex : 0]}
-            </p>
+          <div style={{
+            position: 'absolute',
+            top: -40,
+            left: 15,
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid #00e5ff',
+            boxShadow: '0 0 20px rgba(0, 229, 255, 0.5)',
+            background: '#0a0f1e'
+          }}>
+            <img src={config?.astronautPhotoUrl || '/astronaut_avatar.png'} alt="Astronaut" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+          <h4 style={{
+            position: 'absolute',
+            top: -30,
+            left: 110,
+            margin: 0,
+            color: '#00e5ff',
+            fontSize: '16px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px rgba(0, 229, 255, 0.6)'
+          }}>
+            {config.astronautName || 'Astronot'}
+          </h4>
+          <p style={{ margin: '8px 0 0 0', fontSize: '16px', lineHeight: '1.5' }}>
+            {safeDialogues[tunnelDialogueIndex >= 0 ? tunnelDialogueIndex : 0]}
+          </p>
         </div>
       )}
       <style>{`
@@ -966,7 +1006,7 @@ function BirthdayCake({ config }) {
   const startTime = useRef(null);
 
   // Animasi Pop-up Kue: Menunggu kamera sampai (5 detik), lalu kue muncul dengan efek membal (bounce)
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!startTime.current) startTime.current = state.clock.elapsedTime;
     const t = state.clock.elapsedTime - startTime.current;
     
@@ -984,8 +1024,12 @@ function BirthdayCake({ config }) {
         const ease = p === 0 ? 0 : p === 1 ? 1 : Math.pow(2, -10 * p) * Math.sin((p * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
         
         groupRef.current.scale.setScalar(Math.max(0, ease));
+        
+        // Putar kue perlahan terus-menerus
+        groupRef.current.rotation.y += delta * 0.5;
       }
     }
+
   });
 
   // Posisi melingkar untuk 6 lilin
@@ -1035,22 +1079,9 @@ function BirthdayCake({ config }) {
       {candlePositions.map((pos, i) => (
         <CandleFlame key={i} position={pos} />
       ))}
-
-      {/* GIF Animasi melayang di atas kue (jika diatur di Admin) */}
-      {config?.cakeGifUrl && (
-        <Html position={[0, 5.5, 0]} center transform scale={1.5} distanceFactor={15}>
-          <img 
-            src={config.cakeGifUrl} 
-            alt="Cake GIF" 
-            style={{ 
-              width: '150px', 
-              pointerEvents: 'none', 
-              userSelect: 'none',
-              background: 'transparent'
-            }} 
-          />
-        </Html>
-      )}
+      
+      {/* Hiasan Kue 3D (Video / Gambar) - Menggunakan Billboard agar selalu menghadap kamera */}
+      {config?.cakeGifUrl && <CakeOrnament url={config.cakeGifUrl} size={config.cakeGifSize || 3.5} />}
     </group>
   );
 }
@@ -1110,7 +1141,7 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24", config }) {
     
     // Menggunakan Canvas 2D untuk membentuk partikel sesuai font nyata yang Estetik!
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
+    canvas.width = 2048;
     canvas.height = 600;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
@@ -1122,8 +1153,9 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24", config }) {
     let line1 = greetingStr;
     let line2 = "";
     
-    // Jika lebar teks melampaui batas aman (900px), pecah jadi 2 baris
-    if (ctx.measureText(greetingStr).width > 900 && words.length > 1) {
+    // Pecah jadi 2 baris HANYA jika teks benar-benar sangat panjang (lebar > 1800)
+    // Sesuai permintaan pengguna: teks JANGAN dikecilkan. Jika tidak muat (lebar > 1800), di enter saja.
+    if (ctx.measureText(greetingStr).width > 1800 && words.length > 1) {
       let tempStr = "";
       let breakIndex = Math.ceil(words.length / 2);
       const totalWidth = ctx.measureText(greetingStr).width;
@@ -1139,18 +1171,7 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24", config }) {
       
       line1 = words.slice(0, breakIndex).join(' ');
       line2 = words.slice(breakIndex).join(' ');
-      
-      // Jika salah satu baris masih kepanjangan, kecilkan font perlahan
-      while ((ctx.measureText(line1).width > 950 || ctx.measureText(line2).width > 950) && fontSize > 40) {
-        fontSize -= 5;
-        ctx.font = `italic ${fontSize}px 'Monotype Corsiva', 'Apple Chancery', cursive`;
-      }
-    } else {
-      // Jika masih 1 baris tapi kepanjangan (misal 1 kata super panjang)
-      while (ctx.measureText(line1).width > 950 && fontSize > 40) {
-        fontSize -= 5;
-        ctx.font = `italic ${fontSize}px 'Monotype Corsiva', 'Apple Chancery', cursive`;
-      }
+      // Loop pengecilan font dihapus sesuai permintaan
     }
     
     ctx.fillStyle = 'white';
@@ -1159,31 +1180,31 @@ function NumberFirework({ greetingStr = "Selamat Ulang Tahun Ke 24", config }) {
     
     // Tulis ke kanvas secara dinamis
     if (line2) {
-      ctx.fillText(line1, 512, 300 - fontSize * 0.7);
-      ctx.fillText(line2, 512, 300 + fontSize * 0.7);
+      ctx.fillText(line1, 1024, 300 - fontSize * 0.55);
+      ctx.fillText(line2, 1024, 300 + fontSize * 0.55);
     } else {
-      ctx.fillText(line1, 512, 300);
+      ctx.fillText(line1, 1024, 300);
     }
     
-    const imgData = ctx.getImageData(0, 0, 1024, 600).data;
+    const imgData = ctx.getImageData(0, 0, 2048, 600).data;
     const validPixels = [];
     
     // Scan pixel canvas dengan lompatan 3 pixel untuk resolusi merata
     for (let y = 0; y < 600; y += 3) { 
-      for (let x = 0; x < 1024; x += 3) {
-        const alpha = imgData[(y * 1024 + x) * 4 + 3];
+      for (let x = 0; x < 2048; x += 3) {
+        const alpha = imgData[(y * 2048 + x) * 4 + 3];
         if (alpha > 50) validPixels.push({ x, y });
       }
     }
     
-    if (validPixels.length === 0) validPixels.push({ x: 512, y: 300 });
+    if (validPixels.length === 0) validPixels.push({ x: 1024, y: 300 });
 
     // Distribusikan partikel
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // 1. Posisi target sesuai cetakan huruf di canvas
       const pixel = validPixels[i % validPixels.length];
       
-      const tx = (pixel.x - 512) * scaleFactor;
+      const tx = (pixel.x - 1024) * scaleFactor;
       const ty = (300 - pixel.y) * scaleFactor + dynamicBaseY; // 300 adalah titik tengah height 600
       const tz = baseZ;
       
@@ -1414,29 +1435,47 @@ function TunnelExitSequence({ onFinish, config }) {
           bottom: '40px',
           left: '50%',
           transform: 'translateX(-50%)',
-          display: 'flex',
-          alignItems: 'center',
-          background: 'rgba(10, 15, 30, 0.85)',
+          background: 'rgba(10, 15, 30, 0.9)',
           border: '2px solid #ff3366',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: 'inset 0 0 20px rgba(255, 51, 102, 0.15), 0 0 30px rgba(255, 51, 102, 0.2)',
+          borderRadius: '16px',
+          padding: '50px 24px 24px 24px',
+          boxShadow: 'inset 0 0 20px rgba(255, 51, 102, 0.15), 0 0 30px rgba(255, 51, 102, 0.25)',
           backdropFilter: 'blur(8px)',
           maxWidth: '600px',
           width: '90%',
           color: 'white',
           fontFamily: "'Courier New', Courier, monospace",
-          gap: '20px',
           animation: 'fadeInDialog 0.5s ease-out'
         }}>
-          <img src="/astronaut_avatar.png" alt="Astronaut" style={{
-            width: '80px', height: '80px', borderRadius: '50%',
-            border: '3px solid #ff3366', flexShrink: 0
-          }} />
-          <div style={{ textAlign: 'left' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#ff3366', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>{config.astronautName || 'Astronot'}</h4>
-            <p style={{ margin: 0, fontSize: '16px', lineHeight: '1.5' }}>"Bersiaplah! Kita akan segera sampai di tujuan."</p>
+          <div style={{
+            position: 'absolute',
+            top: -40,
+            left: 15,
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid #ff3366',
+            boxShadow: '0 0 20px rgba(255, 51, 102, 0.5)',
+            background: '#0a0f1e'
+          }}>
+            <img src={config?.astronautPhotoUrl || '/astronaut_avatar.png'} alt="Astronaut" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+          <h4 style={{
+            position: 'absolute',
+            top: -30,
+            left: 110,
+            margin: 0,
+            color: '#ff3366',
+            fontSize: '16px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px rgba(255, 51, 102, 0.6)'
+          }}>
+            {config.astronautName || 'Astronot'}
+          </h4>
+          <p style={{ margin: '8px 0 0 0', fontSize: '16px', lineHeight: '1.5' }}>"Bersiaplah! Kita akan segera sampai di tujuan."</p>
         </div>
       )}
       {['3','2','1'].includes(step) && (
@@ -1526,19 +1565,16 @@ function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, is
     bottom: '40px',
     left: '50%',
     transform: 'translateX(-50%)',
-    display: 'flex',
-    alignItems: 'center',
-    background: 'rgba(10, 15, 30, 0.85)',
+    background: 'rgba(10, 15, 30, 0.9)',
     border: '2px solid #00e5ff',
-    borderRadius: '12px',
-    padding: '20px',
-    boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.2)',
+    borderRadius: '16px',
+    padding: '50px 24px 24px 24px',
+    boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.25)',
     backdropFilter: 'blur(8px)',
     maxWidth: '600px',
     width: '90%',
     color: 'white',
     fontFamily: "'Courier New', Courier, monospace",
-    gap: '20px',
     animation: 'fadeInDialog 0.5s ease-out',
     pointerEvents: 'none',
   };
@@ -1579,22 +1615,70 @@ function DestinationTutorialOverlay({ config, stage, timeLeft, audioDuration, is
       {/* Dialog "Akhirnya kita sampai" */}
       {stage === 0 && !isCinematic && (
         <div style={dialogStyle}>
-          <img src="/astronaut_avatar.png" alt="Astronaut" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '3px solid #00e5ff', flexShrink: 0 }} />
-          <div style={{ textAlign: 'left' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#00e5ff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>{config.astronautName || 'Astronot'}</h4>
-            <p style={{ margin: 0, fontSize: '16px', lineHeight: '1.5' }}>Akhirnya kita sampai di tujuan! Silakan ZOOM (cubit/scroll) untuk mendekat ke planet.</p>
+          <div style={{
+            position: 'absolute',
+            top: -40,
+            left: 15,
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid #00e5ff',
+            boxShadow: '0 0 20px rgba(0, 229, 255, 0.5)',
+            background: '#0a0f1e'
+          }}>
+            <img src={config?.astronautPhotoUrl || '/astronaut_avatar.png'} alt="Astronaut" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+          <h4 style={{
+            position: 'absolute',
+            top: -30,
+            left: 110,
+            margin: 0,
+            color: '#00e5ff',
+            fontSize: '16px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px rgba(0, 229, 255, 0.6)'
+          }}>
+            {config.astronautName || 'Astronot'}
+          </h4>
+          <p style={{ margin: '8px 0 0 0', fontSize: '16px', lineHeight: '1.5' }}>Akhirnya kita sampai di tujuan! Silakan ZOOM (cubit/scroll) untuk mendekat ke planet.</p>
         </div>
       )}
 
       {/* Dialog "Saya memberikan waktu" */}
       {stage === 1 && !isCinematic && (
         <div style={dialogStyle}>
-          <img src="/astronaut_avatar.png" alt="Astronaut" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '3px solid #00e5ff', flexShrink: 0 }} />
-          <div style={{ textAlign: 'left' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#00e5ff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>{config.astronautName || 'Astronot'}</h4>
-            <p style={{ margin: 0, fontSize: '16px', lineHeight: '1.5' }}>Saya akan memberikan kamu waktu {audioMinutes} menit untuk mengelilingi planet.</p>
+          <div style={{
+            position: 'absolute',
+            top: -40,
+            left: 15,
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '3px solid #00e5ff',
+            boxShadow: '0 0 20px rgba(0, 229, 255, 0.5)',
+            background: '#0a0f1e'
+          }}>
+            <img src={config?.astronautPhotoUrl || '/astronaut_avatar.png'} alt="Astronaut" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+          <h4 style={{
+            position: 'absolute',
+            top: -30,
+            left: 110,
+            margin: 0,
+            color: '#00e5ff',
+            fontSize: '16px',
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px rgba(0, 229, 255, 0.6)'
+          }}>
+            {config.astronautName || 'Astronot'}
+          </h4>
+          <p style={{ margin: '8px 0 0 0', fontSize: '16px', lineHeight: '1.5' }}>Saya akan memberikan kamu waktu {audioMinutes} menit untuk mengelilingi planet.</p>
         </div>
       )}
 
@@ -1679,23 +1763,26 @@ function InitialFlyInController({ onComplete, isWaiting, setIsWaiting, isExiting
 }
 
 // ===== FINALE DIALOGUE =====
-// Di-render di LUAR Canvas sebagai DOM biasa dengan position:fixed.
-// Karena OrbitControls selalu aktif untuk zoom (enabled=true, enableZoom=true),
-// gesture pinch SELALU ditangkap Three.js dan browser tidak pernah nge-zoom HTML.
-// Dengan demikian, dialog cukup pakai position:fixed biasa tanpa perlu
-// melacak visualViewport atau menghitung inverse scale.
-function FinaleDialogue({ dialogues, astronautName }) {
+function FinaleDialogue({ dialogues, astronautName, astronautPhotoUrl, onFinish }) {
   const [index, setIndex] = useState(0);
   const vp = useVisualViewport();
 
   useEffect(() => {
-    const handleGlobalClick = () => setIndex(prev => prev + 1);
+    const handleGlobalClick = () => {
+      setIndex(prev => {
+        const next = prev + 1;
+        if (next >= (dialogues?.length ?? 0) && onFinish) {
+          setTimeout(onFinish, 300);
+        }
+        return next;
+      });
+    };
     const t = setTimeout(() => window.addEventListener('click', handleGlobalClick), 500);
     return () => {
       clearTimeout(t);
       window.removeEventListener('click', handleGlobalClick);
     };
-  }, []);
+  }, [dialogues, onFinish]);
 
   if (!dialogues || index >= dialogues.length) return null;
 
@@ -1717,35 +1804,54 @@ function FinaleDialogue({ dialogues, astronautName }) {
         bottom: '40px',
         left: '50%',
         transform: 'translateX(-50%)',
-        display: 'flex',
-        alignItems: 'center',
-        background: 'rgba(10, 15, 30, 0.85)',
+        background: 'rgba(10, 15, 30, 0.9)',
         border: '2px solid #00e5ff',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.2)',
+        borderRadius: '16px',
+        padding: '50px 24px 24px 24px',
+        boxShadow: 'inset 0 0 20px rgba(0, 229, 255, 0.15), 0 0 30px rgba(0, 229, 255, 0.25)',
         backdropFilter: 'blur(8px)',
         width: '90%',
         maxWidth: '600px',
         color: 'white',
         fontFamily: "'Courier New', Courier, monospace",
-        gap: '20px',
         animation: 'fadeInDialog 0.5s ease-out',
         pointerEvents: 'none',
       }}>
-        <img
-          src="/astronaut_avatar.png"
-          alt="Astronaut"
-          style={{ width: '80px', height: '80px', borderRadius: '50%', border: '3px solid #00e5ff', flexShrink: 0 }}
-        />
-        <div style={{ textAlign: 'left' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#00e5ff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
-            {astronautName || 'Astronot'}
-          </h4>
-          <p style={{ margin: 0, fontSize: '16px', lineHeight: '1.5' }}>
-            {dialogues[index]}
-          </p>
+        <div style={{
+          position: 'absolute',
+          top: -40,
+          left: 15,
+          width: 80,
+          height: 80,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '3px solid #00e5ff',
+          boxShadow: '0 0 20px rgba(0, 229, 255, 0.5)',
+          background: '#0a0f1e'
+        }}>
+          <img
+            src={astronautPhotoUrl || "/astronaut_avatar.png"}
+            alt="Astronaut"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
+        <h4 style={{
+          position: 'absolute',
+          top: -30,
+          left: 110,
+          margin: 0,
+          color: '#00e5ff',
+          fontSize: '16px',
+          textTransform: 'uppercase',
+          letterSpacing: '1px',
+          fontWeight: 'bold',
+          textShadow: '0 0 10px rgba(0, 229, 255, 0.6)'
+        }}>
+          {astronautName || 'Astronot'}
+        </h4>
+        <p style={{ margin: '8px 0 0 0', fontSize: '16px', lineHeight: '1.5' }}>
+          {dialogues[index]}
+        </p>
       </div>
       <div style={{
         position: 'absolute',
@@ -1765,7 +1871,51 @@ function FinaleDialogue({ dialogues, astronautName }) {
 }
 
 
-export default function Scene({ config, isFinale, onReachDestination, onCountdownStart, audioDuration }) {
+// ===== ANIMATED PLANET & TEXT =====
+function AnimatedPlanetGroup({ isFinale, config }) {
+  const planetRef = useRef();
+  const textRef = useRef();
+
+  useFrame((state, delta) => {
+    if (planetRef.current) {
+      // User meminta agar lingkaran planet lurus (tidak miring)
+      const targetTilt = 0.0;
+      planetRef.current.rotation.x = THREE.MathUtils.lerp(planetRef.current.rotation.x, targetTilt, delta * 2);
+    }
+    if (textRef.current) {
+      // Teks naik ke atas kue saat finale
+      const targetY = isFinale ? 13 : 6;
+      textRef.current.position.y = THREE.MathUtils.lerp(textRef.current.position.y, targetY, delta * 2);
+    }
+  });
+
+  return (
+    <group position={[0, 3, 0]}>
+      {/* Planet & Ring yang akan miring */}
+      <group ref={planetRef} rotation={[0, 0, 0]}>
+        <ParticlePlanet colors={config.planetColors} />
+        <RotatingRingsSystem config={config} />
+      </group>
+
+      {/* Teks lepas dari rotasi planet agar selalu menghadap kamera */}
+      <Suspense fallback={null}>
+        <Text
+          ref={textRef}
+          position={[0, 6, 0]}
+          fontSize={1}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          {config.greetingMessage} {config.targetName}
+        </Text>
+      </Suspense>
+    </group>
+  );
+}
+
+
+export default function Scene({ config, isFinale, onReachDestination, onCountdownStart, audioDuration, jumpToPlanet }) {
   const [isCinematic, setIsCinematic] = useState(false);
   const [isInitialFlyIn, setIsInitialFlyIn] = useState(true);
   const [isWaiting, setIsWaiting] = useState(true);
@@ -1776,9 +1926,19 @@ export default function Scene({ config, isFinale, onReachDestination, onCountdow
   const [tunnelIsSlowMode, setTunnelIsSlowMode] = useState(false);
   const [tunnelDialogueIndex, setTunnelDialogueIndex] = useState(-1);
   const [showCinematicStopNotif, setShowCinematicStopNotif] = useState(false);
-  // State untuk DestinationTutorial: diisi oleh komponen logika, ditampilkan oleh overlay di luar Canvas
   const [destStage, setDestStage] = useState(0);
+  const [isFinaleComplete, setIsFinaleComplete] = useState(false);
+  const [isStoryShareOpen, setIsStoryShareOpen] = useState(false);
   const [destTimeLeft, setDestTimeLeft] = useState(0);
+
+  // Preview: Skip langsung ke planet (bypass tunnel animation)
+  useEffect(() => {
+    if (jumpToPlanet) {
+      setIsInitialFlyIn(false);
+      setIsWaiting(false);
+      setIsExiting(false);
+    }
+  }, [jumpToPlanet]);
 
   // Menampilkan notifikasi cara berhenti dari mode sinematik HANYA selama 5 detik pertama
   useEffect(() => {
@@ -1941,27 +2101,14 @@ export default function Scene({ config, isFinale, onReachDestination, onCountdow
         {isFinale && (
           <group position={[0, 3, 0]}>
             <Fireworks config={config} />
-            <BirthdayCake config={config} />
+            <Suspense fallback={null}>
+              <BirthdayCake config={config} />
+            </Suspense>
             <NumberFirework config={config} greetingStr={config.finaleGreeting || 'Selamat Ulang Tahun Ke 24'} />
           </group>
         )}
 
-        <group rotation={[0.3, 0, 0]} position={[0, 3, 0]}>
-          <ParticlePlanet colors={config.planetColors} />
-          <RotatingRingsSystem config={config} />
-
-          <Suspense fallback={null}>
-            <Text
-              position={[0, 6, 0]}
-              fontSize={1}
-              color="white"
-              anchorX="center"
-              anchorY="middle"
-            >
-              {config.greetingMessage} {config.targetName}
-            </Text>
-          </Suspense>
-        </group>
+        <AnimatedPlanetGroup isFinale={isFinale} config={config} />
       </group>
 
 
@@ -1999,12 +2146,47 @@ export default function Scene({ config, isFinale, onReachDestination, onCountdow
       )}
     </Canvas>
 
-    {isFinale && finaleDialogueReady && (
+    {isFinale && finaleDialogueReady && !isFinaleComplete && (
       <FinaleDialogue 
         dialogues={config.finaleDialogues || ["Apakah Kamu Menyukai kejutan ini?", "Semoga harapanmu terkabul!"]} 
         astronautName={config.astronautName} 
+        astronautPhotoUrl={config.astronautPhotoUrl}
+        onFinish={() => setIsFinaleComplete(true)}
       />
     )}
+
+    {isFinale && isFinaleComplete && (
+      <div style={{
+        position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+        zIndex: 9999, animation: 'fadeInDialog 0.5s ease-out',
+        pointerEvents: 'auto',
+      }}>
+        <button
+          onClick={() => setIsStoryShareOpen(true)}
+          style={{
+            background: 'linear-gradient(135deg, #ff3366, #e11d48)',
+            color: 'white', fontWeight: 'bold',
+            padding: '16px 32px', borderRadius: '999px',
+            border: 'none', cursor: 'pointer',
+            fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px',
+            boxShadow: '0 0 30px rgba(255,51,102,0.5)',
+            transition: 'all 0.2s', fontFamily: "'Courier New', Courier, monospace",
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <span style={{ fontSize: '20px' }}>📱</span>
+          {config.storyShareButtonText || 'Bagikan ke IG Story'}
+        </button>
+      </div>
+    )}
+
+    <StoryShareModal
+      isOpen={isStoryShareOpen}
+      onClose={() => setIsStoryShareOpen(false)}
+      config={config}
+    />
 
     {isWaiting && isExiting && (
       <TunnelExitSequence 
